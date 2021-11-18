@@ -1,3 +1,4 @@
+// @ZOHO BOOKS
 // # Get Invoices
 export async function getInvoices(customer_name, item_name) {
   const connection = 'invoicebooks'
@@ -87,6 +88,35 @@ export async function getInvoiceById(invoice_id) {
     const request = await ZOHO.CRM.CONNECTION.invoke(connection, requestConfig)
 
     console.log(request)
+  } catch (error) {
+    return {
+      status: 'failed',
+      error,
+    }
+  }
+}
+
+// @ZOHO CREATOR
+// Get record by criteria
+export async function getRecordByFolio(folio) {
+  const connection = 'creator'
+
+  const requestConfig = {
+    method: 'GET',
+    url: `https://creator.zoho.com/api/v2/sistemas134/cotizadorgc/report/Presupuesto_Report?Folio=${folio}`,
+  }
+
+  try {
+    const creator_record = await ZOHO.CRM.CONNECTION.invoke(
+      connection,
+      requestConfig
+    )
+
+    if (creator_record.details.statusMessage.code !== 3000)
+      return alert.show('warning', 'No se encontro registro')
+
+    const recordData = creator_record.details.statusMessage.data[0]
+    return recordData
   } catch (error) {
     return {
       status: 'failed',

@@ -113,24 +113,10 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
   ITEM_NAME = deal.Nombre_de_Producto.name
 
   // # Obtener registro de cotizacion
-  const requestConfig = {
-    method: 'GET',
-    url: `https://creator.zoho.com/api/v2/sistemas134/cotizadorgc/report/Presupuesto_Report?Folio=${deal.Numero_de_Cierre}`,
-  }
+  //deal.Numero_de_Cierre
 
   try {
-    const creator_record = await ZOHO.CRM.CONNECTION.invoke(
-      'creator',
-      requestConfig
-    )
-
-    console.log('creator_record', creator_record)
-
-    // Revisar si el registro existe
-    if (creator_record.details.statusMessage.code !== 3000)
-      return alert.show('warning', 'No se encontro registro')
-
-    const recordData = creator_record.details.statusMessage.data[0]
+    const recordData = zohoFn.getRecordByFolio(deal.Numero_de_Cierre)
     RECORD = recordData
 
     // # Obtener invoices

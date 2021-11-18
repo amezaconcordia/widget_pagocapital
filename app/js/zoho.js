@@ -87,7 +87,7 @@ export async function getInvoiceById(invoice_id) {
   try {
     const request = await ZOHO.CRM.CONNECTION.invoke(connection, requestConfig)
 
-    console.log(request)
+    return request.details.statusMessage
   } catch (error) {
     return {
       status: 'failed',

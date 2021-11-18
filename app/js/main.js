@@ -4,9 +4,8 @@ import * as zohoFn from './zoho.js'
 // Variable declarations
 const tabla = document.querySelector('.detalle-facturas')
 const submit = document.querySelector('#submit-pago')
-// document.querySelector('.nombre-cliente').innerText = data[0].CUSTOMER_NAME
-// document.querySelector('.lote-cliente').innerText = data[0].zcrm_potential_name
-let pagadoCapital = 0
+const pagoCapital = document.querySelector('#pago')
+// let pagadoCapital = 0
 const formatPrice = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -25,7 +24,6 @@ let primerNoPagada,
 
 // # Function declarations
 const createTable = (invoices) => {
-  tabla.innerHTML = ''
   invoices.forEach((factura) => {
     // console.log(invoice.reference_number)
 
@@ -66,26 +64,6 @@ const createTable = (invoices) => {
       const divEstatus = document.createElement('div')
       divEstatus.textContent = factura.status
       divFactura.append(spanEstado)
-      if (factura.status == 'paid') {
-        // Saber cuanto tiene pagado a Capital
-        pagadoCapital = pagadoCapital + capital.value
-        divEstatus.classList.add('paid')
-      } else if (factura.status == 'partially_paid') {
-        // Calcular cuando pago parcial tiene y sumarlo
-        // P E N D I E N T E
-        divEstatus.classList.add('partially-paid')
-      } else if (factura.status == 'sent') {
-        divEstatus.classList.add('sent')
-        invoices.push({
-          id: factura.invoice_id,
-        })
-      } else if (factura.status == 'overdue') {
-        if (factura.balance === factura.total) {
-          invoices.push({
-            id: factura.invoice_id,
-          })
-        }
-      }
       spanEstado.append(divEstatus)
     }
   })
@@ -98,7 +76,13 @@ const findPrimerNoPagada = (invoices) => {
   return find
 }
 
-// # On load
+const crearPagoCapital = (e) => {
+  e.preventDefault()
+  const monto = pagoCapital.value
+  console.log(monto)
+}
+
+// # ZOHO CRM SDK On load
 ZOHO.embeddedApp.on('PageLoad', async function (data) {
   // # Obtener datos del trato actual
   const zoho_result = await ZOHO.CRM.API.getRecord({
@@ -112,10 +96,8 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
   CUSTOMER_NAME = deal.Contact_Name.name
   ITEM_NAME = deal.Nombre_de_Producto.name
 
-  // # Obtener registro de cotizacion
-  //deal.Numero_de_Cierre
-
   try {
+    // # Obtener registro de cotizacion
     const recordData = zohoFn.getRecordByFolio(deal.Numero_de_Cierre)
     RECORD = recordData
 
@@ -136,3 +118,6 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
 })
 
 ZOHO.embeddedApp.init()
+
+// # Event Listeners
+submit.addEventListener('click', crearPagoCapital)

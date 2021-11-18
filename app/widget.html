@@ -1,9 +1,78 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-  </head>
-  <body>
-    <h2>This is a sample Widget built using Zoho Extension toolkit.</h2>
-  </body>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Pago a Capital | Grupo Concordia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="./css/main.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <link rel="stylesheet" type = "text/css" href="./css/load.css">
+</head>
+<body>
+    <!-- <header>
+        <div class="img">
+            <img class="logo" src="https://download-accl.zoho.com/v1/docs/prv/l1ct49c18fc95cc794a7ca846132560070276?_t=1630181179848">
+            <h2 class="titulo">Pago a Capital | Grupo Concordia</h2> 
+        </div>
+        <div class="datos-cliente">
+            <h2 class="nombre-cliente"></h2>
+            <h3 class="lote-cliente"></h3>
+        </div>
+    </header> -->
+    <div class="container">
+    </BR>    
+        <div class="form-pago">
+            <form action="/server/pagos_capital/realizarPago" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="pago"><b>Ingresar monto de pago a Capital</b></label>
+                    <input class="form-input" type="number" name="pago" id="pago">
+                    <input id="submit-pago" type="submit" class="btn" value="Realizar Pago">
+                    
+                </div>
+            </form>
+            <!-- <button class="boton" type="submit" value="Alertas">Alertas</button> -->
+            <div id="facturas-container" class="facturas">
+            <!-- Aqui va a ir el loader tabla -->
+                <table class="detalle-facturas">
+                    <tr>
+                        <th>FECHA</th>
+                        <th>DESCRIPCION</th>
+                        <th>CANTIDAD</th>
+                        <th>INTERES</th>
+                        <th>CAPITAL</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </table>
+            </div>
+            <div class="alert">
+                <div class="message">This is an alert message.</div>
+                <span class="alert-close">&#10006;</span>
+            </div>
+            <!-- Paginacion -->
+            <!-- <div class="pagina">
+                <ul>
+                    <li class="btn-prev"><span><i class="fas fa-angle-left"></i> Prev </span></li>
+                    <li class="number active"><span>1</span></li>
+                    <li class="number"><span>2</span></li>
+                    <li class="dot"><span>3</span></li>
+                    <li class="number"><span>4</span></li>
+                    <li class="number"><span>5</span></li>
+                    <li class="btn-next"><span> Next <i class="fas fa-angle-right"></i></span></li>
+                </ul>
+            </div> -->
+        </div>
+    </div>
+    <!-- Load -->
+    <div class="loader-wrapper">
+        <span class="loader"><span class="loader-inner"></span></span>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <script src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+    <script src="https://live.zwidgets.com/js-sdk/1.1/ZohoEmbededAppSDK.min.js"></script>
+    <script src="./js/loader.js"></script>
+    <script src="./js/main.js" type="module"></script>
+</body>
+
 </html>

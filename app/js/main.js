@@ -76,10 +76,74 @@ const findPrimerNoPagada = (invoices) => {
   return find
 }
 
-const crearPagoCapital = (e) => {
+const createPagoCapital = (monto) => {
+  let today = new Date()
+  today = convertirFecha(today)
+  let fecha_vencimiento = new Date(new Date().setDate(new Date().getDate() + 7))
+  fecha_vencimiento = convertirFecha(fecha_vencimiento)
+
+  let invoice_data = {
+    customer_id: RECORD.IDContactoBooks,
+    reference_number: 'Pago Prueba Widget',
+    date: today,
+    due_date: fecha_vencimiento,
+    custom_fields: [
+      {
+        label: 'TipoProducto',
+        value: 'Casa',
+      },
+      {
+        label: 'Pago a Capital',
+        value: true,
+      },
+      {
+        label: 'Capital',
+        value: document.querySelector('#pago').value,
+      },
+      {
+        label: 'Interes',
+        value: 0,
+      },
+    ],
+    line_items: [
+      {
+        item_id: RECORD.IDProductoBooks,
+        description: 'Pago a Capital de Consecutivo',
+        quantity: 1,
+        rate: parseFloat(monto),
+      },
+    ],
+  }
+
+  return invoice_data
+}
+
+const convertirFecha = (fecha) => {
+  let dd = String(fecha.getDate()).padStart(2, '0')
+  let mm = String(fecha.getMonth() + 1).padStart(2, '0')
+  let yyyy = fecha.getFullYear()
+  fecha = yyyy + '-' + mm + '-' + dd
+  return fecha
+}
+
+const realizarPagoCapital = async (e) => {
   e.preventDefault()
+
+  // # Crear factura de pago de capital
   const monto = pagoCapital.value
-  console.log(monto)
+  const invoice = createPagoCapital(monto)
+
+  /*
+   * # OPERACIONES
+   */
+
+  // # Crear factura en books
+  const crearPagoResp = await zohoFn.createInvoice(invoice)
+  console.log(crearPagoResp)
+
+  // # Eliminar invoices
+  /* const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
+  console.log(deleteResp) */
 }
 
 // # ZOHO CRM SDK On load
@@ -98,8 +162,7 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
 
   try {
     // # Obtener registro de cotizacion
-    const recordData = zohoFn.getRecordByFolio(deal.Numero_de_Cierre)
-    RECORD = recordData
+    RECORD = await zohoFn.getRecordByFolio(deal.Numero_de_Cierre)
 
     // # Obtener invoices
     const invoices = await zohoFn.getInvoices(CUSTOMER_NAME, ITEM_NAME)
@@ -120,4 +183,4 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
 ZOHO.embeddedApp.init()
 
 // # Event Listeners
-submit.addEventListener('click', crearPagoCapital)
+submit.addEventListener('click', realizarPagoCapital)

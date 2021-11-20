@@ -96,8 +96,44 @@ export async function getInvoiceById(invoice_id) {
   }
 }
 
+export async function createInvoice(invoice_data) {
+  const connection = 'invoicebooks'
+
+  try {
+    //Crear Factura
+    //Request Config Crear
+    let req_data = {
+      method: 'POST',
+      parameters: invoice_data,
+      url: 'https://books.zoho.com/api/v3/invoices?organization_id=651425182',
+      headers: { 'Content-Type': 'application/json' },
+    }
+    const zoho_promise = await ZOHO.CRM.CONNECTION.invoke(connection, req_data)
+    console.log(zoho_promise)
+    let invoice_id = zoho_promise.details.statusMessage.invoice.invoice_id
+
+    //Enviar Factura
+    //Request Config Enviar
+    let req_send = {
+      method: 'POST',
+      url: `https://books.zoho.com/api/v3/invoices/${invoice_id}/status/sent?organization_id=651425182`,
+      headers: { 'Content-Type': 'application/json' },
+    }
+    const zoho_promise_send = await ZOHO.CRM.CONNECTION.invoke(
+      connection,
+      req_send
+    )
+    console.log(zoho_promise_send)
+  } catch (error) {
+    return {
+      status: 'failed',
+      error,
+    }
+  }
+}
+
 // @ZOHO CREATOR
-// Get record by criteria
+// # Get record by criteria
 export async function getRecordByFolio(folio) {
   const connection = 'creator'
 
@@ -117,6 +153,59 @@ export async function getRecordByFolio(folio) {
 
     const recordData = creator_record.details.statusMessage.data[0]
     return recordData
+  } catch (error) {
+    return {
+      status: 'failed',
+      error,
+    }
+  }
+}
+
+// @ZOHO CRM
+// # Eliminar facturas de un cliente en Books
+export async function deleteInvoices(customer_name, item_name) {
+  const functionName = 'testAPI'
+
+  try {
+    const zoho_promise = await ZOHO.CRM.FUNCTIONS.execute(functionName, {
+      arguments: JSON.stringify({
+        customer_name: customer_name,
+        item_name: item_name,
+        masFacturas: true,
+      }),
+    })
+
+    return zoho_promise
+  } catch (error) {
+    return {
+      status: 'failed',
+      error,
+    }
+  }
+}
+
+// # Creacion masiva de invoices
+export async function createInvoices(
+  oportunidad,
+  cliente,
+  producto,
+  registro,
+  posicion
+) {
+  const functionName = 'creacionFacturasCapital'
+
+  try {
+    const zoho_promise = await ZOHO.CRM.FUNCTIONS.execute(functionName, {
+      arguments: JSON.stringify({
+        IDOportunidad: oportunidad,
+        IDClienteBooks: cliente,
+        IDProductoBooks: producto,
+        IDPresupuesto: registro,
+        Position: posicion,
+      }),
+    })
+
+    return zoho_promise
   } catch (error) {
     return {
       status: 'failed',

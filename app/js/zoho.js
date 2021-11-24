@@ -109,7 +109,7 @@ export async function createInvoice(invoice_data) {
       headers: { 'Content-Type': 'application/json' },
     }
     const zoho_promise = await ZOHO.CRM.CONNECTION.invoke(connection, req_data)
-    console.log(zoho_promise)
+
     let invoice_id = zoho_promise.details.statusMessage.invoice.invoice_id
 
     //Enviar Factura
@@ -123,12 +123,25 @@ export async function createInvoice(invoice_data) {
       connection,
       req_send
     )
-    console.log(zoho_promise_send)
+    if (zoho_promise.details.statusMessage.code !== 0) {
+      return { status: 'danger', message: 'La factura no fue creada' }
+    }
+
+    return { status: 'success', message: 'La factura fue creada' }
   } catch (error) {
     return {
       status: 'failed',
       error,
     }
+  }
+}
+
+export async function updateProducBooks(productId, montoConInteres) {
+  const connection = ''
+
+  try {
+  } catch (error) {
+    return { status: 'failed', error }
   }
 }
 
@@ -162,6 +175,36 @@ export async function getRecordByFolio(folio) {
 }
 
 // @ZOHO CRM
+// # Calcular amortizacion y Actualizar registro de cotizacion de Presupuesto Report
+export async function updateAmortizacion(
+  registro,
+  montoInicial,
+  facturaInicial,
+  facturaFinal,
+  pagoCapital
+) {
+  const functionName = 'calcularcapital'
+
+  try {
+    const zoho_promise = await ZOHO.CRM.FUNCTIONS.execute(functionName, {
+      arguments: JSON.stringify({
+        IDPresupuesto: registro,
+        Monto_Inicial: montoInicial,
+        factura_Inicial: facturaInicial,
+        factura_Final: facturaFinal,
+        Pago_capital: pagoCapital,
+      }),
+    })
+
+    return zoho_promise
+  } catch (error) {
+    return {
+      status: 'failed',
+      error,
+    }
+  }
+}
+
 // # Eliminar facturas de un cliente en Books
 export async function deleteInvoices(customer_name, item_name) {
   const functionName = 'testAPI'
@@ -211,5 +254,24 @@ export async function createInvoices(
       status: 'failed',
       error,
     }
+  }
+}
+
+export async function updateProductCRM(productId, montoConInteres) {
+  const req_updateCRM = {
+    Entity: 'Products',
+    APIData: {
+      id: productId,
+      Precio_con_Interes: montoConInteres,
+    },
+    Trigger: [],
+  }
+
+  try {
+    const zoho_promise = await ZOHO.CRM.API.updateRecord(req_updateCRM)
+
+    return zoho_promise
+  } catch (error) {
+    return { status: 'failed', error }
   }
 }

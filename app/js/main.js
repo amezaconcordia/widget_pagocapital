@@ -11,16 +11,7 @@ const formatPrice = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 })
 
-let primerNoPagada,
-  RECORD,
-  CUSTOMER_NAME,
-  ITEM_NAME,
-  item_id,
-  id_Creator,
-  consecutivo,
-  plazo,
-  invoices = [],
-  groups = []
+let PRIMER_NO_PAGADA, RECORD, CUSTOMER_NAME, ITEM_NAME, CONSECUTIVO, PLAZO
 
 // # Function declarations
 const createTable = (invoices) => {
@@ -69,22 +60,46 @@ const createTable = (invoices) => {
   })
 }
 
+const createNewTable = (json_amortizacion) => {
+  const rows = Array.from(tabla.getElementsByTagName('tr'))
+  // console.log(rows)
+  const filterFact = rows.filter((row) => row.cells[5].textContent == 'sent')
+  // console.log(filterFact)
+  filterFact.forEach((row) => {
+    let cells = row.cells
+    // console.log(cells)
+    const consecutivo = row.dataset.consecutivo
+    const factura = json_amortizacion.find((e) => e.Consecutivo == consecutivo)
+    // Actualizar Mensualidad
+    cells[2].textContent = formatPrice.format(factura.Mensualidad)
+    // Actualizar Interes
+    cells[3].textContent = formatPrice.format(factura.Interes)
+    // Actualizar Capital
+    cells[4].textContent = formatPrice.format(factura.Capital)
+  })
+}
+
 const findPrimerNoPagada = (invoices) => {
   const find = invoices.find(
     (fact) => fact.status == 'sent' && !fact.reference_number.includes('GC')
   )
+
   return find
 }
 
 const createPagoCapital = (monto) => {
   let today = new Date()
   today = convertirFecha(today)
-  let fecha_vencimiento = new Date(new Date().setDate(new Date().getDate() + 7))
+  let fecha_vencimiento = new Date(new Date().setDate(new Date().getDate() + 1))
   fecha_vencimiento = convertirFecha(fecha_vencimiento)
+
+  const refSplit = PRIMER_NO_PAGADA.reference_number.split(' ')
+  const desc = `Pago a Capital de Consecutivo ${refSplit[0]} de ${refSplit[4]} ${refSplit[5]} ${refSplit[6]}`
 
   let invoice_data = {
     customer_id: RECORD.IDContactoBooks,
-    reference_number: 'Pago Prueba Widget',
+    zcrm_potential_id: PRIMER_NO_PAGADA.zcrm_potential_id,
+    reference_number: `Capital ${refSplit[0]} de ${refSplit[4]} ${refSplit[5]} ${refSplit[6]}`,
     date: today,
     due_date: fecha_vencimiento,
     custom_fields: [
@@ -98,7 +113,7 @@ const createPagoCapital = (monto) => {
       },
       {
         label: 'Capital',
-        value: document.querySelector('#pago').value,
+        value: pagoCapital.value,
       },
       {
         label: 'Interes',
@@ -108,7 +123,7 @@ const createPagoCapital = (monto) => {
     line_items: [
       {
         item_id: RECORD.IDProductoBooks,
-        description: 'Pago a Capital de Consecutivo',
+        description: desc,
         quantity: 1,
         rate: parseFloat(monto),
       },
@@ -126,20 +141,47 @@ const convertirFecha = (fecha) => {
   return fecha
 }
 
+const getSaldoInicial = () => {
+  const amortizacion = JSON.parse(`[${RECORD.JSON_Amortizacion}]`)
+
+  const pagoActual = amortizacion.find((f) => f.Consecutivo == CONSECUTIVO)
+  return pagoActual.SaldoInicial
+}
+
 const realizarPagoCapital = async (e) => {
   e.preventDefault()
 
   // # Crear factura de pago de capital
   const monto = pagoCapital.value
   const invoice = createPagoCapital(monto)
+  console.log(invoice)
 
   /*
    * # OPERACIONES
    */
 
+  // # Calcular amortizacion y actualizar registro de cotizacion
+  const saldo = getSaldoInicial()
+  console.log(saldo)
+  const calcularAmortizacion = await zohoFn.updateAmortizacion(
+    RECORD.ID,
+    saldo,
+    CONSECUTIVO,
+    PLAZO,
+    monto
+  )
+  console.log(RECORD.ID, saldo, CONSECUTIVO, PLAZO, monto)
+
+  const amortizacionResp = JSON.parse(calcularAmortizacion.details.output)
+  const jsonAmortizacion = amortizacionResp.data.JSON_Amortizacion
+  console.log(jsonAmortizacion)
+
+  // # Crear nueva tabla
+  createNewTable(jsonAmortizacion)
+
   // # Crear factura en books
-  const crearPagoResp = await zohoFn.createInvoice(invoice)
-  console.log(crearPagoResp)
+  /* const crearPagoResp = await zohoFn.createInvoice(invoice)
+  alert.show(crearPagoResp.status, crearPagoResp.message)*/
 
   // # Eliminar invoices
   /* const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
@@ -172,7 +214,9 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
     createTable(invoices)
 
     // # Buscar primer no pagada
-    findPrimerNoPagada(invoices)
+    PRIMER_NO_PAGADA = findPrimerNoPagada(invoices)
+    CONSECUTIVO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[0])
+    PLAZO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[2])
 
     $('.loader-wrapper').fadeOut('slow')
   } catch (error) {

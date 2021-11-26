@@ -161,6 +161,7 @@ const realizarPagoCapital = async (e) => {
    */
 
   // # Calcular amortizacion y actualizar registro de cotizacion
+
   const saldo = getSaldoInicial()
   console.log(saldo)
   const calcularAmortizacion = await zohoFn.updateAmortizacion(
@@ -173,24 +174,56 @@ const realizarPagoCapital = async (e) => {
   console.log(RECORD.ID, saldo, CONSECUTIVO, PLAZO, monto)
 
   const amortizacionResp = JSON.parse(calcularAmortizacion.details.output)
+  console.log(amortizacionResp)
   const jsonAmortizacion = amortizacionResp.data.JSON_Amortizacion
   console.log(jsonAmortizacion)
 
   // # Crear nueva tabla
   createNewTable(jsonAmortizacion)
 
-  // # Crear factura en books
-  /* const crearPagoResp = await zohoFn.createInvoice(invoice)
-  alert.show(crearPagoResp.status, crearPagoResp.message)*/
+  // # Update productos con nuevo Monto de Interes
+  const updateProdBooks = await zohoFn.updateProducBooks(
+    RECORD.IDProductoBooks,
+    // 230000
+    amortizacionResp.data.NewMonto.toFixed(2)
+  )
+
+  const updateProdCRM = await zohoFn.updateProductCRM(
+    RECORD.IDProducto,
+    amortizacionResp.data.NewMonto.toFixed(2)
+  )
+
+  console.log(updateProdBooks, updateProdCRM)
 
   // # Eliminar invoices
-  /* const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
-  console.log(deleteResp) */
+  const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
+  console.log(deleteResp)
+
+  // # Crear factura en books
+  const crearPagoResp = await zohoFn.createInvoice(invoice)
+  alert.show(crearPagoResp.status, crearPagoResp.message)
+
+  // # Creacion masiva de facturas
+  const sizeMap = amortizacionResp.data.sizemap
+
+  // const sizeMap = 10
+  for (let i = 0; i < sizeMap; i++) {
+    const creacionMasiva = await zohoFn.createInvoices(
+      RECORD.IDOportunidad,
+      RECORD.IDContactoBooks,
+      RECORD.IDProductoBooks,
+      RECORD.ID,
+      i
+    )
+    console.log(creacionMasiva)
+  }
+  // alert.show(creacionMasiva.status, creacionMasiva.message)
 }
 
 // # ZOHO CRM SDK On load
 ZOHO.embeddedApp.on('PageLoad', async function (data) {
   // # Obtener datos del trato actual
+
   const zoho_result = await ZOHO.CRM.API.getRecord({
     Entity: 'Deals',
     RecordID: data.EntityId[0],

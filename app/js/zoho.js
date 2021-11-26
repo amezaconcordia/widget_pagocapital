@@ -137,9 +137,24 @@ export async function createInvoice(invoice_data) {
 }
 
 export async function updateProducBooks(productId, montoConInteres) {
-  const connection = ''
+  const connection = 'productobooks'
+
+  const objItem = {
+    custom_fields: [{ label: 'Precio con Interes', value: montoConInteres }],
+  }
 
   try {
+    const req_update = {
+      method: 'PUT',
+      url: `https://books.zoho.com/api/v3/items/${productId}?organization_id=651425182`,
+      parameters: objItem,
+    }
+    const zoho_promise = await ZOHO.CRM.CONNECTION.invoke(
+      connection,
+      req_update
+    )
+
+    return zoho_promise
   } catch (error) {
     return { status: 'failed', error }
   }

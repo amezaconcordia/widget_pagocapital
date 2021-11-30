@@ -163,15 +163,17 @@ const realizarPagoCapital = async (e) => {
   // # Calcular amortizacion y actualizar registro de cotizacion
 
   const saldo = getSaldoInicial()
-  console.log(saldo)
+
+  const saldoDeducido = saldo - monto
+  console.log('Nuevo saldo deducido:', saldoDeducido)
   const calcularAmortizacion = await zohoFn.updateAmortizacion(
     RECORD.ID,
-    saldo,
+    saldoDeducido,
     CONSECUTIVO,
     PLAZO,
     monto
   )
-  console.log(RECORD.ID, saldo, CONSECUTIVO, PLAZO, monto)
+  console.log(RECORD.ID, saldoDeducido, CONSECUTIVO, PLAZO, monto)
 
   const amortizacionResp = JSON.parse(calcularAmortizacion.details.output)
   console.log(amortizacionResp)

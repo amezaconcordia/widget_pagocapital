@@ -54,6 +54,9 @@ const createTable = (invoices) => {
       const spanEstado = document.createElement('td')
       const divEstatus = document.createElement('div')
       divEstatus.textContent = factura.status
+      if (factura.status == 'paid' || factura.status == 'partially_paid') {
+        divEstatus.classList.add('paid')
+      }
       divFactura.append(spanEstado)
       spanEstado.append(divEstatus)
     }
@@ -72,11 +75,34 @@ const createNewTable = (json_amortizacion) => {
     const factura = json_amortizacion.find((e) => e.Consecutivo == consecutivo)
     // Actualizar Mensualidad
     cells[2].textContent = formatPrice.format(factura.Mensualidad)
+    cells[2].style.color = '#5494f7'
     // Actualizar Interes
     cells[3].textContent = formatPrice.format(factura.Interes)
+    cells[3].style.color = '#5494f7'
     // Actualizar Capital
     cells[4].textContent = formatPrice.format(factura.Capital)
+    cells[4].style.color = '#5494f7'
   })
+}
+
+const insertPagoToTable = (invoice) => {
+  const rows = Array.from(tabla.getElementsByTagName('tr'))
+
+  const split = invoice.reference_number.split(' ')
+  const consecutivo = split[1]
+  const find = rows.find((row) => row.dataset.consecutivo == consecutivo)
+
+  console.log('Tr consecutivo', find)
+  let adjacentHtml = `<tr class="factura" style="color: #059400;">
+  <td>${invoice.date}</td>
+  <td>${invoice.reference_number}</td>
+  <td>${formatPrice.format(pagoCapital.value)}</td>
+  <td>$0.00</td>
+  <td>${formatPrice.format(pagoCapital.value)}</td>
+  <td>sent</td>
+  </tr>`
+
+  find.insertAdjacentHTML('beforebegin', adjacentHtml)
 }
 
 const findPrimerNoPagada = (invoices) => {
@@ -150,6 +176,7 @@ const getSaldoInicial = () => {
 
 const realizarPagoCapital = async (e) => {
   e.preventDefault()
+  submit.style.display = 'none'
 
   // # Crear factura de pago de capital
   const monto = pagoCapital.value
@@ -160,12 +187,14 @@ const realizarPagoCapital = async (e) => {
    * # OPERACIONES
    */
 
-  // # Calcular amortizacion y actualizar registro de cotizacion
-
+  // # Calcular nuevo saldo
   const saldo = getSaldoInicial()
+  console.log('Saldo Inicial:', saldo)
 
   const saldoDeducido = saldo - monto
   console.log('Nuevo saldo deducido:', saldoDeducido)
+
+  // # Calcular amortizacion y actualizar registro de cotizacion
   const calcularAmortizacion = await zohoFn.updateAmortizacion(
     RECORD.ID,
     saldoDeducido,
@@ -173,6 +202,7 @@ const realizarPagoCapital = async (e) => {
     PLAZO,
     monto
   )
+
   console.log(RECORD.ID, saldoDeducido, CONSECUTIVO, PLAZO, monto)
 
   const amortizacionResp = JSON.parse(calcularAmortizacion.details.output)
@@ -180,46 +210,57 @@ const realizarPagoCapital = async (e) => {
   const jsonAmortizacion = amortizacionResp.data.JSON_Amortizacion
   console.log(jsonAmortizacion)
 
-  // # Crear nueva tabla
-  createNewTable(jsonAmortizacion)
+  // Revisar si calculo amortizacion para proceder a crear las nuevas facturas
+  if (amortizacionResp.code == 0) {
+    // # Crear nueva tabla
+    createNewTable(jsonAmortizacion)
+    insertPagoToTable(invoice)
 
-  // # Update productos con nuevo Monto de Interes
-  const updateProdBooks = await zohoFn.updateProducBooks(
-    RECORD.IDProductoBooks,
-    // 230000
-    amortizacionResp.data.NewMonto.toFixed(2)
-  )
-
-  const updateProdCRM = await zohoFn.updateProductCRM(
-    RECORD.IDProducto,
-    amortizacionResp.data.NewMonto.toFixed(2)
-  )
-
-  console.log(updateProdBooks, updateProdCRM)
-
-  // # Eliminar invoices
-  const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
-  console.log(deleteResp)
-
-  // # Crear factura en books
-  const crearPagoResp = await zohoFn.createInvoice(invoice)
-  alert.show(crearPagoResp.status, crearPagoResp.message)
-
-  // # Creacion masiva de facturas
-  const sizeMap = amortizacionResp.data.sizemap
-
-  // const sizeMap = 10
-  for (let i = 0; i < sizeMap; i++) {
-    const creacionMasiva = await zohoFn.createInvoices(
-      RECORD.IDOportunidad,
-      RECORD.IDContactoBooks,
+    /*
+    // # Update productos con nuevo Monto de Interes
+    const updateProdBooks = await zohoFn.updateProducBooks(
       RECORD.IDProductoBooks,
-      RECORD.ID,
-      i
+      // 230000
+      amortizacionResp.data.NewMonto.toFixed(2)
     )
-    console.log(creacionMasiva)
+
+    const updateProdCRM = await zohoFn.updateProductCRM(
+      RECORD.IDProducto,
+      amortizacionResp.data.NewMonto.toFixed(2)
+    )
+
+    console.log(updateProdBooks, updateProdCRM)
+
+    // # Eliminar invoices
+    const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
+    alert.show(deleteResp.status, deleteResp.message)
+
+    // # Crear factura en books
+    const crearPagoResp = await zohoFn.createInvoice(invoice)
+    alert.show(crearPagoResp.status, crearPagoResp.message)
+
+    // # Creacion masiva de facturas
+    const sizeMap = amortizacionResp.data.sizemap
+
+    // const sizeMap = 10
+    for (let i = 0; i < sizeMap; i++) {
+      const creacionMasiva = await zohoFn.createInvoices(
+        RECORD.IDOportunidad,
+        RECORD.IDContactoBooks,
+        RECORD.IDProductoBooks,
+        RECORD.ID,
+        i
+      )
+      alert.show(creacionMasiva.status, creacionMasiva.message)
+    }
+    */
+    alert.show('success', 'Proceso completado.')
+  } else {
+    alert.show(
+      'warning',
+      'No se pudo actualizar tabla de amortizacion. Favor de intentar de nuevo o contactar a Sistemas.'
+    )
   }
-  // alert.show(creacionMasiva.status, creacionMasiva.message)
 }
 
 // # ZOHO CRM SDK On load

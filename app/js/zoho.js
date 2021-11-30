@@ -124,10 +124,13 @@ export async function createInvoice(invoice_data) {
       req_send
     )
     if (zoho_promise.details.statusMessage.code !== 0) {
-      return { status: 'danger', message: 'La factura no fue creada' }
+      return {
+        status: 'danger',
+        message: 'Factura de Pago a Capital NO fue creada...',
+      }
     }
 
-    return { status: 'success', message: 'La factura fue creada' }
+    return { status: 'success', message: 'Factura de Pago a Capital creada' }
   } catch (error) {
     return {
       status: 'failed',

@@ -220,7 +220,6 @@ const realizarPagoCapital = async (e) => {
     createNewTable(jsonAmortizacion)
     insertPagoToTable(invoice)
 
-    /*
     // # Update productos con nuevo Monto de Interes
     const updateProdBooks = await zohoFn.updateProducBooks(
       RECORD.IDProductoBooks,
@@ -237,7 +236,17 @@ const realizarPagoCapital = async (e) => {
 
     // # Eliminar invoices
     const deleteResp = await zohoFn.deleteInvoices(CUSTOMER_NAME, ITEM_NAME)
-    alert.show(deleteResp.status, deleteResp.message)
+    if (deleteResp.code == 'success') {
+      alert.show(
+        'success',
+        'Facturas eliminadas. Creando facturas con nueva mensualidad'
+      )
+    } else {
+      alert.show(
+        'danger',
+        'Las facturas no fueron eliminadas. Contactar a Sistemas'
+      )
+    }
 
     // # Crear factura en books
     const crearPagoResp = await zohoFn.createInvoice(invoice)
@@ -245,6 +254,7 @@ const realizarPagoCapital = async (e) => {
 
     // # Creacion masiva de facturas
     const sizeMap = amortizacionResp.data.sizemap
+    let contador = 0
 
     // const sizeMap = 10
     for (let i = 0; i < sizeMap; i++) {
@@ -255,9 +265,20 @@ const realizarPagoCapital = async (e) => {
         RECORD.ID,
         i
       )
-      alert.show(creacionMasiva.status, creacionMasiva.message)
+
+      const creacionResp = JSON.parse(creacionMasiva.details.output)
+      console.log('Creacion Resp', creacionResp)
+      if (creacionResp.code == 0) {
+        contador = contador + 1
+        alert.show(
+          'success',
+          `Facturas creadas con nueva mensualidad. [${contador}] de [${sizeMap}]`
+        )
+      } else {
+        alert.show('danger', `Error al crear facturas de lista ${i}`)
+      }
     }
-    */
+
     alert.show('success', 'Proceso completado.')
   } else {
     alert.show(

@@ -236,6 +236,7 @@ export async function deleteInvoices(customer_name, item_name) {
       }),
     })
 
+    console.log('Resp eliminarFacturas: ', zoho_promise)
     return zoho_promise
   } catch (error) {
     return {
@@ -266,6 +267,7 @@ export async function createInvoices(
       }),
     })
 
+    console.log('Creacion Facturas:', zoho_promise)
     return zoho_promise
   } catch (error) {
     return {

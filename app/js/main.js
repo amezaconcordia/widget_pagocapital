@@ -86,14 +86,15 @@ const createNewTable = (json_amortizacion) => {
 }
 
 const insertPagoToTable = (invoice) => {
-  const rows = Array.from(tabla.getElementsByTagName('tr'))
+  try {
+    const rows = Array.from(tabla.getElementsByTagName('tr'))
 
-  const split = invoice.reference_number.split(' ')
-  const consecutivo = split[1]
-  const find = rows.find((row) => row.dataset.consecutivo == consecutivo)
+    const split = invoice.reference_number.split(' ')
+    const consecutivo = split[1]
+    const find = rows.find((row) => row.dataset.consecutivo == consecutivo)
 
-  console.log('Tr consecutivo', find)
-  let adjacentHtml = `<tr class="factura" style="color: #059400;">
+    console.log('Tr consecutivo', find)
+    let adjacentHtml = `<tr class="factura" style="color: #059400;">
   <td>${invoice.date}</td>
   <td>${invoice.reference_number}</td>
   <td>${formatPrice.format(pagoCapital.value)}</td>
@@ -102,7 +103,10 @@ const insertPagoToTable = (invoice) => {
   <td>sent</td>
   </tr>`
 
-  find.insertAdjacentHTML('beforebegin', adjacentHtml)
+    find.insertAdjacentHTML('beforebegin', adjacentHtml)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 const findPrimerNoPagada = (invoices) => {

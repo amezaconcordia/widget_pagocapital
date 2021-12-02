@@ -139,6 +139,7 @@ export async function createInvoice(invoice_data) {
   }
 }
 
+// # Update producto Books
 export async function updateProducBooks(productId, montoConInteres) {
   const connection = 'productobooks'
 
@@ -277,6 +278,7 @@ export async function createInvoices(
   }
 }
 
+// # Update producto CRM
 export async function updateProductCRM(productId, montoConInteres) {
   const req_updateCRM = {
     Entity: 'Products',
@@ -293,5 +295,19 @@ export async function updateProductCRM(productId, montoConInteres) {
     return zoho_promise
   } catch (error) {
     return { status: 'failed', error }
+  }
+}
+
+// # Revisar si producto es de tipo Casa
+export async function isCasa(productId) {
+  try {
+    const product = await ZOHO.CRM.API.getRecord({
+      Entity: 'Products',
+      RecordID: productId,
+    })
+
+    return product
+  } catch (error) {
+    return { status: 'failed' }
   }
 }

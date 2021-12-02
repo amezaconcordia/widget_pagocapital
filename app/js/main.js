@@ -288,10 +288,47 @@ const realizarPagoCapital = async (e) => {
   }
 }
 
+const validationScript = async (deal, record) => {
+  // # Validar si es Casa
+  const product = await zohoFn.isCasa(deal.Nombre_de_Producto.id)
+  console.log('Product', product)
+
+  const esCasa = product.data[0].Uso_Habitacional
+  if (esCasa != 'Casa') {
+    return {
+      passed: false,
+      message: 'El producto asociado no aplica para esta operacion',
+    }
+  }
+
+  // # Validar si trato tiene Numero de Cierre
+  if (deal.Numero_de_Cierre == null)
+    return {
+      passed: false,
+      message: 'No se encontro un Numero de Cierre en el Trato',
+    }
+
+  // # Validar registro de cotizacion
+  if (
+    record.IDOportunidad == '' ||
+    record.IDContacto == '' ||
+    record.IDContactoBooks == '' ||
+    record.IDProducto == '' ||
+    record.IDProductoBooks == ''
+  ) {
+    return {
+      passed: false,
+      message: 'Revisar la cotizacion para agregar datos faltantes',
+    }
+  }
+
+  console.log('Validation passed...')
+  return { passed: true }
+}
+
 // # ZOHO CRM SDK On load
 ZOHO.embeddedApp.on('PageLoad', async function (data) {
   // # Obtener datos del trato actual
-
   const zoho_result = await ZOHO.CRM.API.getRecord({
     Entity: 'Deals',
     RecordID: data.EntityId[0],
@@ -306,20 +343,29 @@ ZOHO.embeddedApp.on('PageLoad', async function (data) {
   try {
     // # Obtener registro de cotizacion
     RECORD = await zohoFn.getRecordByFolio(deal.Numero_de_Cierre)
+    console.log('Record', RECORD)
 
-    // # Obtener invoices
-    const invoices = await zohoFn.getInvoices(CUSTOMER_NAME, ITEM_NAME)
-    console.log('All Invoices:', invoices)
+    // # Run validation
+    const checkValidation = await validationScript(deal, RECORD)
 
-    // # Crear tabla de amortizacion
-    createTable(invoices)
+    if (!checkValidation.passed) {
+      alert.show('warning', checkValidation.message)
+    } else {
+      // Validation passed
+      // # Obtener invoices
+      const invoices = await zohoFn.getInvoices(CUSTOMER_NAME, ITEM_NAME)
+      console.log('All Invoices:', invoices)
 
-    // # Buscar primer no pagada
-    PRIMER_NO_PAGADA = findPrimerNoPagada(invoices)
-    CONSECUTIVO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[0])
-    PLAZO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[2])
+      // # Crear tabla de amortizacion
+      createTable(invoices)
 
-    $('.loader-wrapper').fadeOut('slow')
+      // # Buscar primer no pagada
+      PRIMER_NO_PAGADA = findPrimerNoPagada(invoices)
+      CONSECUTIVO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[0])
+      PLAZO = parseInt(PRIMER_NO_PAGADA.reference_number.split(' ')[2])
+
+      $('.loader-wrapper').fadeOut('slow')
+    }
   } catch (error) {
     alert.show('danger', error.message)
   }

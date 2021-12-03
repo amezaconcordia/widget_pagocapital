@@ -326,8 +326,40 @@ const validationScript = async (deal, record) => {
   return { passed: true }
 }
 
+// Input validation script
+function setInputFilter(textbox, inputFilter) {
+  ;[
+    'input',
+    'keydown',
+    'keyup',
+    'mousedown',
+    'mouseup',
+    'select',
+    'contextmenu',
+    'drop',
+  ].forEach(function (event) {
+    textbox.addEventListener(event, function () {
+      if (inputFilter(this.value)) {
+        this.oldValue = this.value
+        this.oldSelectionStart = this.selectionStart
+        this.oldSelectionEnd = this.selectionEnd
+      } else if (this.hasOwnProperty('oldValue')) {
+        this.value = this.oldValue
+        this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd)
+      } else {
+        this.value = ''
+      }
+    })
+  })
+}
+
 // # ZOHO CRM SDK On load
 ZOHO.embeddedApp.on('PageLoad', async function (data) {
+  // Widget rezise
+  ZOHO.CRM.UI.Resize({ height: '800', width: '1000' }).then(function (data) {
+    console.log(data)
+  })
+
   // # Obtener datos del trato actual
   const zoho_result = await ZOHO.CRM.API.getRecord({
     Entity: 'Deals',
@@ -375,3 +407,7 @@ ZOHO.embeddedApp.init()
 
 // # Event Listeners
 submit.addEventListener('click', realizarPagoCapital)
+
+setInputFilter(pagoCapital, function (value) {
+  return /^-?\d*[.,]?\d{0,2}$/.test(value)
+})
